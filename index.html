@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Bewirtungsbeleg</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+:root{
+  --bg:#0f1117;--card:#1a1d27;--card-hover:#222632;--border:#2a2e3a;
+  --accent:#3b82f6;--accent-glow:rgba(59,130,246,.15);
+  --green:#22c55e;--green-glow:rgba(34,197,94,.15);
+  --red:#ef4444;--text:#f1f5f9;--text-muted:#94a3b8;--text-dim:#64748b;
+  --radius:12px
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--bg);color:var(--text);min-height:100vh;
+  -webkit-tap-highlight-color:transparent
+}
+.header{
+  position:sticky;top:0;z-index:100;background:rgba(15,17,23,.85);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);padding:16px 20px;
+  display:flex;align-items:center;justify-content:space-between
+}
+.header h1{font-size:1.15rem;font-weight:700;letter-spacing:-.02em}
+.header h1 span{color:var(--accent)}
+.icon-btn{
+  width:40px;height:40px;border-radius:10px;border:1px solid var(--border);
+  background:var(--card);color:var(--text-muted);display:flex;
+  align-items:center;justify-content:center;cursor:pointer;font-size:1.2rem
+}
+.tab-nav{display:flex;gap:4px;padding:12px 20px;background:var(--bg)}
+.tab-btn{
+  flex:1;padding:10px 8px;border-radius:10px;border:none;background:transparent;
+  color:var(--text-dim);font-family:inherit;font-size:.85rem;font-weight:600;cursor:pointer
+}
+.tab-btn.active{background:var(--accent);color:#fff;box-shadow:0 4px 15px rgba(59,130,246,.3)}
+.content{padding:0 20px 120px}
+.view{display:none}.view.active{display:block}
+.form-section{margin-top:20px}
+.section-label{
+  font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--accent);margin-bottom:12px
+}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:.8rem;font-weight:500;color:var(--text-muted);margin-bottom:6px}
+.req{color:var(--red)}
+input[type=text],input[type=number],input[type=date],textarea,select{
+  width:100%;padding:12px 14px;border-radius:var(--radius);
+  border:1px solid var(--border);background:var(--card);color:var(--text);
+  font-family:inherit;font-size:.95rem;-webkit-appearance:none;transition:border-color .2s
+}
+input:focus,textarea:focus,select:focus{
+  outline:0;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)
+}
+textarea{resize:vertical;min-height:70px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media (max-width:680px){
+  .row2,.row3{grid-template-columns:1fr}
+}
+.photo-area{
+  margin-top:16px;border:2px dashed var(--border);border-radius:var(--radius);
+  padding:24px;text-align:center;cursor:pointer
+}
+.photo-area:active{border-color:var(--accent);background:var(--accent-glow)}
+.photo-area .icon{font-size:2.5rem;margin-bottom:8px}
+.photo-area p{color:var(--text-muted);font-size:.85rem}
+.photo-area input{display:none}
+.photo-preview-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));
+  gap:8px;margin-top:12px
+}
+.photo-thumb{position:relative;border-radius:8px;overflow:hidden;aspect-ratio:1}
+.photo-thumb img{width:100%;height:100%;object-fit:cover}
+.photo-thumb .rm{
+  position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;
+  border:none;background:rgba(239,68,68,.9);color:#fff;font-size:.8rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center
+}
+.submit-btn{
+  width:100%;padding:16px;border-radius:var(--radius);border:none;background:var(--accent);
+  color:#fff;font-family:inherit;font-size:1rem;font-weight:700;cursor:pointer;
+  margin-top:24px;box-shadow:0 4px 20px rgba(59,130,246,.3)
+}
+.submit-btn:active{transform:scale(.98)}
+.history-item{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px;margin-top:12px;cursor:pointer
+}
+.history-item:active{background:var(--card-hover)}
+.history-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:12px}
+.history-date{font-size:.8rem;color:var(--accent);font-weight:600}
+.history-amount{font-size:1.05rem;font-weight:700;white-space:nowrap}
+.history-details{font-size:.85rem;color:var(--text-muted);line-height:1.4}
+.history-empty{text-align:center;padding:60px 20px;color:var(--text-dim)}
+.history-empty .icon{font-size:3rem;margin-bottom:12px}
+.detail-back{
+  display:inline-flex;align-items:center;gap:6px;color:var(--accent);font-size:.9rem;
+  font-weight:600;cursor:pointer;margin:16px 0 8px;border:none;background:transparent;
+  font-family:inherit
+}
+.detail-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:20px;margin-top:12px
+}
+.detail-row{
+  display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);
+  font-size:.9rem;gap:12px
+}
+.detail-row:last-child{border-bottom:none}
+.detail-label{color:var(--text-muted)}
+.detail-value{font-weight:600;text-align:right;max-width:60%}
+.detail-photos{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:16px
+}
+.detail-photos img{width:100%;border-radius:8px;aspect-ratio:4/3;object-fit:cover}
+.detail-actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.action-btn{
+  flex:1;padding:12px;border-radius:var(--radius);border:1px solid var(--border);
+  background:var(--card);color:var(--text);font-family:inherit;font-size:.85rem;
+  font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;
+  min-width:120px
+}
+.action-btn:active{background:var(--card-hover)}
+.action-btn.danger{border-color:var(--red);color:var(--red)}
+.toast{
+  position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--green);color:#fff;padding:12px 24px;border-radius:50px;font-weight:600;
+  font-size:.9rem;opacity:0;pointer-events:none;transition:all .3s;z-index:200;
+  box-shadow:0 8px 30px rgba(34,197,94,.3)
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.badge{
+  display:inline-block;padding:3px 10px;border-radius:50px;font-size:.7rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:.05em
+}
+.badge.ok{background:var(--green-glow);color:var(--green)}
+.badge.no{background:rgba(239,68,68,.15);color:var(--red)}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>Bewirtungs<span>beleg</span></h1>
+  <button class="icon-btn" onclick="exportAllCSV()" title="CSV">📊</button>
+</div>
+
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('new')">＋ Neu</button>
+  <button class="tab-btn" onclick="switchTab('history')">📋 Belege</button>
+</div>
+
+<div class="content">
+  <div id="view-new" class="view active">
+    <div class="form-section">
+      <div class="section-label">📍 Bewirtung</div>
+      <div class="form-group">
+        <label>Datum <span class="req">*</span></label>
+        <input type="date" id="f-datum">
+      </div>
+      <div class="row2">
+        <div class="form-group">
+          <label>Restaurant <span class="req">*</span></label>
+          <input type="text" id="f-ort" placeholder="Name, Stadt">
+        </div>
+        <div class="form-group">
+          <label>Anschrift</label>
+          <input type="text" id="f-anschrift" placeholder="Straße, PLZ Ort">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="section-label">👥 Teilnehmer</div>
+      <div class="form-group">
+        <label>Bewirtende Person <span class="req">*</span></label>
+        <input type="text" id="f-bew" placeholder="Ihr Name">
+      </div>
+      <div class="form-group">
+        <label>Bewirtete Personen <span class="req">*</span></label>
+        <textarea id="f-teil" placeholder="Name, Firma&#10;Name, Firma"></textarea>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="section-label">💼 Geschäftlicher Anlass</div>
+      <div class="form-group">
+        <label>Anlass <span class="req">*</span></label>
+        <select id="f-anlass">
+          <option value="">— Auswählen —</option>
+          <option>Geschäftsanbahnung</option>
+          <option>Kundenpflege</option>
+          <option>Vertragsverhandlung</option>
+          <option>Projektbesprechung</option>
+          <option>Kooperationsgespräch</option>
+          <option>Sonstiges</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Konkretisierung</label>
+        <input type="text" id="f-detail" placeholder="z.B. Angebot Flottenservice besprochen">
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="section-label">💶 Beträge</div>
+      <div class="row3">
+        <div class="form-group">
+          <label>Betrag <span class="req">*</span></label>
+          <input type="number" id="f-betrag" step="0.01" inputmode="decimal" placeholder="0.00">
+        </div>
+        <div class="form-group">
+          <label>Trinkgeld</label>
+          <input type="number" id="f-trink" step="0.01" inputmode="decimal" placeholder="0.00">
+        </div>
+        <div class="form-group">
+          <label>Gesamt</label>
+          <input type="text" id="f-ges" readonly style="background:var(--border);color:var(--green);font-weight:700">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="section-label">📸 Beleg-Foto</div>
+      <div class="photo-area" onclick="document.getElementById('pi').click()">
+        <div class="icon">📷</div>
+        <p>Foto aufnehmen oder aus Galerie</p>
+        <input type="file" id="pi" accept="image/*" multiple>
+      </div>
+      <div class="photo-preview-grid" id="pp"></div>
+    </div>
+
+    <div class="form-section">
+      <div class="section-label">📝 Notiz</div>
+      <div class="form-group">
+        <textarea id="f-note" placeholder="Optional"></textarea>
+      </div>
+    </div>
+
+    <button class="submit-btn" onclick="save()">✓ Beleg speichern</button>
+  </div>
+
+  <div id="view-history" class="view">
+    <div id="hlist"></div>
+  </div>
+
+  <div id="view-detail" class="view">
+    <button class="detail-back" onclick="switchTab('history')">← Zurück</button>
+    <div id="det"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let photos = [];
+let editId = null;
+
+document.addEventListener('DOMContentLoaded', function () {
+  g('f-datum').value = todayISO();
+  g('f-betrag').addEventListener('input', calc);
+  g('f-trink').addEventListener('input', calc);
+  g('pi').addEventListener('change', function (e) {
+    addPhotos(e.target.files);
+    e.target.value = '';
+  });
+
+  const savedName = localStorage.getItem('bw_name');
+  if (savedName) g('f-bew').value = savedName;
+});
+
+function g(id) { return document.getElementById(id); }
+function todayISO() { return new Date().toISOString().split('T')[0]; }
+
+function calc() {
+  const b = parseFloat(g('f-betrag').value) || 0;
+  const t = parseFloat(g('f-trink').value) || 0;
+  g('f-ges').value = (b + t).toFixed(2) + ' €';
+}
+
+function addPhotos(files) {
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      photos.push({
+        id: 'p' + Date.now() + Math.random().toString(36).slice(2, 6),
+        data: e.target.result
+      });
+      renderPhotos();
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+function renderPhotos() {
+  const container = g('pp');
+  container.innerHTML = '';
+
+  photos.forEach(function (photo) {
+    const div = document.createElement('div');
+    div.className = 'photo-thumb';
+    div.innerHTML = '<img src="' + photo.data + '"><button class="rm" data-id="' + photo.id + '">✕</button>';
+    container.appendChild(div);
+  });
+
+  container.querySelectorAll('.rm').forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      const removeId = this.getAttribute('data-id');
+      photos = photos.filter(function (p) { return p.id !== removeId; });
+      renderPhotos();
+    });
+  });
+}
+
+function save() {
+  const datum = g('f-datum').value;
+  const ort = g('f-ort').value.trim();
+  const anschrift = g('f-anschrift').value.trim();
+  const bew = g('f-bew').value.trim();
+  const teil = g('f-teil').value.trim();
+  const anlass = g('f-anlass').value;
+  const detail = g('f-detail').value.trim();
+  const betrag = g('f-betrag').value;
+  const trink = g('f-trink').value;
+  const note = g('f-note').value.trim();
+
+  if (!datum || !ort || !bew || !teil || !anlass || !betrag) {
+    toast('Pflichtfelder ausfüllen', true);
+    return;
+  }
+
+  localStorage.setItem('bw_name', bew);
+
+  const beleg = {
+    id: editId || ('bw' + Date.now()),
+    datum,
+    ort,
+    anschrift,
+    bew,
+    teil,
+    anlass,
+    detail,
+    betrag: parseFloat(betrag) || 0,
+    trink: parseFloat(trink) || 0,
+    gesamt: (parseFloat(betrag) || 0) + (parseFloat(trink) || 0),
+    note,
+    photos: photos.slice(),
+    updatedAt: new Date().toISOString()
+  };
+
+  const list = getAll();
+
+  if (editId) {
+    const idx = list.findIndex(function (item) { return item.id === editId; });
+    if (idx !== -1) {
+      beleg.createdAt = list[idx].createdAt;
+      list[idx] = beleg;
+    }
+    editId = null;
+  } else {
+    beleg.createdAt = new Date().toISOString();
+    list.unshift(beleg);
+  }
+
+  saveAll(list);
+  resetForm();
+  toast('Gespeichert ✓');
+  switchTab('history');
+}
+
+function getAll() {
+  try {
+    return JSON.parse(localStorage.getItem('bwbelege') || '[]');
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveAll(arr) {
+  localStorage.setItem('bwbelege', JSON.stringify(arr));
+}
+
+function resetForm() {
+  g('f-datum').value = todayISO();
+  ['f-ort','f-anschrift','f-teil','f-anlass','f-detail','f-betrag','f-trink','f-ges','f-note'].forEach(function(id){
+    g(id).value = '';
+  });
+  photos = [];
+  renderPhotos();
+  editId = null;
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(function (t) { t.classList.remove('active'); });
+  document.querySelectorAll('.view').forEach(function (v) { v.classList.remove('active'); });
+
+  if (tab === 'new') {
+    document.querySelectorAll('.tab-btn')[0].classList.add('active');
+    g('view-new').classList.add('active');
+  } else if (tab === 'history') {
+    document.querySelectorAll('.tab-btn')[1].classList.add('active');
+    g('view-history').classList.add('active');
+    renderHistory();
+  } else {
+    g('view-detail').classList.add('active');
+  }
+}
+
+function renderHistory() {
+  const list = getAll();
+  const container = g('hlist');
+
+  if (!list.length) {
+    container.innerHTML = '<div class="history-empty"><div class="icon">📋</div><p>Noch keine Belege</p></div>';
+    return;
+  }
+
+  let html = '';
+  list.forEach(function (b) {
+    const complete = b.datum && b.ort && b.bew && b.teil && b.anlass && b.betrag && b.photos && b.photos.length;
+    html += '<div class="history-item" onclick="showDetail(\'' + b.id + '\')">' +
+      '<div class="history-meta"><span class="history-date">' + formatDate(b.datum) + '</span><span class="history-amount">' + b.gesamt.toFixed(2) + ' €</span></div>' +
+      '<div class="history-details"><strong>' + esc(b.ort) + '</strong> · ' + esc(b.anlass) + '<br>' + esc((b.teil || '').split('\n')[0]) + ' ' +
+      (complete ? '<span class="badge ok">Vollständig</span>' : '<span class="badge no">Unvollständig</span>') +
+      '</div></div>';
+  });
+
+  container.innerHTML = html;
+}
+
+function showDetail(id) {
+  const list = getAll();
+  const b = list.find(function (item) { return item.id === id; });
+  if (!b) return;
+
+  let html = '<div class="detail-card">' +
+    detailRow('Datum', formatDate(b.datum)) +
+    detailRow('Restaurant', esc(b.ort)) +
+    (b.anschrift ? detailRow('Anschrift', esc(b.anschrift)) : '') +
+    detailRow('Bewirtender', esc(b.bew)) +
+    detailRow('Teilnehmer', esc(b.teil).replace(/\n/g, '<br>')) +
+    detailRow('Anlass', esc(b.anlass) + (b.detail ? '<br><small>' + esc(b.detail) + '</small>' : '')) +
+    detailRow('Betrag', b.betrag.toFixed(2) + ' €') +
+    detailRow('Trinkgeld', (b.trink || 0).toFixed(2) + ' €') +
+    '<div class="detail-row"><span class="detail-label">Gesamt</span><span class="detail-value" style="color:var(--green);font-size:1.1rem">' + b.gesamt.toFixed(2) + ' €</span></div>' +
+    (b.note ? detailRow('Notiz', esc(b.note)) : '') +
+    '</div>';
+
+  if (b.photos && b.photos.length) {
+    html += '<div class="detail-photos">';
+    b.photos.forEach(function (photo) {
+      html += '<img src="' + photo.data + '">';
+    });
+    html += '</div>';
+  }
+
+  html += '<div class="detail-actions">' +
+    '<button class="action-btn" onclick="exportPDF(\'' + b.id + '\')">📄 PDF</button>' +
+    '<button class="action-btn" onclick="shareEntry(\'' + b.id + '\')">📤 Senden</button>' +
+    '<button class="action-btn" onclick="editEntry(\'' + b.id + '\')">✏️ Bearbeiten</button>' +
+    '<button class="action-btn danger" onclick="deleteEntry(\'' + b.id + '\')">🗑 Löschen</button>' +
+    '</div>';
+
+  g('det').innerHTML = html;
+  switchTab('detail');
+}
+
+function detailRow(label, value) {
+  return '<div class="detail-row"><span class="detail-label">' + label + '</span><span class="detail-value">' + value + '</span></div>';
+}
+
+function editEntry(id) {
+  const b = getAll().find(function (item) { return item.id === id; });
+  if (!b) return;
+
+  editId = id;
+  g('f-datum').value = b.datum;
+  g('f-ort').value = b.ort;
+  g('f-anschrift').value = b.anschrift || '';
+  g('f-bew').value = b.bew;
+  g('f-teil').value = b.teil;
+  g('f-anlass').value = b.anlass;
+  g('f-detail').value = b.detail || '';
+  g('f-betrag').value = b.betrag;
+  g('f-trink').value = b.trink || '';
+  g('f-note').value = b.note || '';
+  photos = (b.photos || []).slice();
+
+  renderPhotos();
+  calc();
+  switchTab('new');
+}
+
+function deleteEntry(id) {
+  if (!confirm('Beleg löschen?')) return;
+  const updated = getAll().filter(function (item) { return item.id !== id; });
+  saveAll(updated);
+  toast('Gelöscht');
+  switchTab('history');
+}
+
+function exportPDF(id) {
+  const b = getAll().find(function (item) { return item.id === id; });
+  if (!b) return;
+
+  let photoHtml = '';
+  if (b.photos && b.photos.length) {
+    b.photos.forEach(function (photo) {
+      photoHtml += '<img src="' + photo.data + '" style="max-width:100%;max-height:400px;margin:8px 0;border:1px solid #ddd;border-radius:4px">';
+    });
+  }
+
+  const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Bewirtungsbeleg</title><style>' +
+    'body{font-family:-apple-system,sans-serif;padding:40px;color:#1a1a1a;max-width:700px;margin:0 auto}' +
+    'h1{font-size:1.4rem;border-bottom:2px solid #333;padding-bottom:8px;margin-bottom:4px}' +
+    '.sub{color:#666;font-size:.85rem;margin-bottom:24px}' +
+    'table{width:100%;border-collapse:collapse;margin:16px 0}' +
+    'td{padding:10px 12px;border-bottom:1px solid #e2e2e2;vertical-align:top;font-size:.9rem}' +
+    'td:first-child{font-weight:600;width:35%;color:#555}.total{font-size:1.1rem;font-weight:700;color:#16a34a}' +
+    '.sig{margin-top:60px;border-top:1px solid #333;width:250px;padding-top:8px;font-size:.8rem;color:#666}' +
+    '.legal{margin-top:40px;font-size:.7rem;color:#999;border-top:1px solid #eee;padding-top:12px}' +
+    '</style></head><body>' +
+    '<h1>Bewirtungsbeleg</h1><p class="sub">gemäß §4 Abs. 5 Nr. 2 EStG</p><table>' +
+    '<tr><td>Datum</td><td>' + formatDate(b.datum) + '</td></tr>' +
+    '<tr><td>Ort / Restaurant</td><td>' + esc(b.ort) + (b.anschrift ? '<br>' + esc(b.anschrift) : '') + '</td></tr>' +
+    '<tr><td>Bewirtende Person</td><td>' + esc(b.bew) + '</td></tr>' +
+    '<tr><td>Bewirtete Personen</td><td>' + esc(b.teil).replace(/\n/g, '<br>') + '</td></tr>' +
+    '<tr><td>Geschäftlicher Anlass</td><td>' + esc(b.anlass) + (b.detail ? ' – ' + esc(b.detail) : '') + '</td></tr>' +
+    '<tr><td>Rechnungsbetrag</td><td>' + b.betrag.toFixed(2) + ' €</td></tr>' +
+    '<tr><td>Trinkgeld</td><td>' + (b.trink || 0).toFixed(2) + ' €</td></tr>' +
+    '<tr><td>Gesamtbetrag</td><td class="total">' + b.gesamt.toFixed(2) + ' €</td></tr>' +
+    (b.note ? '<tr><td>Bemerkung</td><td>' + esc(b.note) + '</td></tr>' : '') +
+    '</table>' +
+    (photoHtml ? '<h3 style="font-size:.9rem;color:#555;margin-top:24px">Belegfoto(s)</h3>' + photoHtml : '') +
+    '<div class="sig">Unterschrift Bewirtender</div>' +
+    '<div class="legal">Bewirtungsbeleg-Tool · ' + new Date().toLocaleDateString('de-DE') + ' · Aufbewahrung: 10 Jahre (§147 AO)</div>' +
+    '</body></html>';
+
+  const win = window.open('', '_blank');
+  if (win) {
+    win.document.write(html);
+    win.document.close();
+    setTimeout(function () { win.print(); }, 500);
+  }
+}
+
+function shareEntry(id) {
+  const b = getAll().find(function (item) { return item.id === id; });
+  if (!b) return;
+
+  const text =
+    'Bewirtungsbeleg ' + formatDate(b.datum) + '\n' +
+    'Ort: ' + b.ort + '\n' +
+    'Teilnehmer: ' + b.teil.replace(/\n/g, ', ') + '\n' +
+    'Anlass: ' + b.anlass + (b.detail ? ' – ' + b.detail : '') + '\n' +
+    'Betrag: ' + b.betrag.toFixed(2) + ' €\n' +
+    'Trinkgeld: ' + (b.trink || 0).toFixed(2) + ' €\n' +
+    'Gesamt: ' + b.gesamt.toFixed(2) + ' €';
+
+  if (navigator.share) {
+    navigator.share({ title: 'Bewirtungsbeleg', text: text }).catch(function(){});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(function () {
+      toast('Kopiert');
+    });
+  }
+}
+
+function exportAllCSV() {
+  const list = getAll();
+  if (!list.length) {
+    toast('Keine Belege', true);
+    return;
+  }
+
+  let csv = 'Datum;Ort;Anschrift;Bewirtender;Teilnehmer;Anlass;Detail;Betrag;Trinkgeld;Gesamt;Bemerkung\n';
+  list.forEach(function (b) {
+    csv += [
+      b.datum,
+      quoteCsv(b.ort),
+      quoteCsv(b.anschrift),
+      quoteCsv(b.bew),
+      quoteCsv((b.teil || '').replace(/\n/g, '; ')),
+      quoteCsv(b.anlass),
+      quoteCsv(b.detail),
+      b.betrag.toFixed(2),
+      (b.trink || 0).toFixed(2),
+      b.gesamt.toFixed(2),
+      quoteCsv(b.note)
+    ].join(';') + '\n';
+  });
+
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }));
+  a.download = 'Bewirtungsbelege_' + todayISO() + '.csv';
+  a.click();
+  toast('CSV exportiert ✓');
+}
+
+function quoteCsv(s) {
+  return '"' + (s || '').replace(/"/g, '""') + '"';
+}
+
+function formatDate(d) {
+  if (!d) return '';
+  const p = d.split('-');
+  return p[2] + '.' + p[1] + '.' + p[0];
+}
+
+function esc(s) {
+  return (s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function toast(msg, err) {
+  const t = g('toast');
+  t.textContent = msg;
+  t.style.background = err ? 'var(--red)' : 'var(--green)';
+  t.classList.add('show');
+  setTimeout(function () {
+    t.classList.remove('show');
+  }, 2500);
+}
+</script>
+</body>
+</html>
